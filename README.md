@@ -13,7 +13,7 @@ once all 817 pairs were generated, the script automatically compiled the data in
 the dataset is public here: [RamBhogesara/vera-dpo-dataset](https://huggingface.co/datasets/RamBhogesara/vera-dpo-dataset)
 
 ### 2. dpo fine-tuning
-with the dataset done, i moved to training. i set up a kaggle notebook environment using their free t4 gpus. 
+with the dataset done, i moved to training. i set up a kaggle notebook environment using their free t4 gpus (you can see the full training code in the `notebooks/dpo_training.ipynb` file in this repo). 
 
 i used the `unsloth` library to optimize the memory and did the actual dpo fine-tuning on a `qwen2.5-1.5b-instruct` base model. i had to do some gpu memory wrangling (locking the model to a single gpu to avoid parallel tensor crashes) and injected lora adapters so the whole thing could train efficiently in 4-bit precision.
 
