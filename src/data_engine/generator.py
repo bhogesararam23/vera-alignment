@@ -57,29 +57,50 @@ async def main(args):
     print(f"loading {args.num_samples} samples from truthfulqa...")
     dataset = load_dataset("truthfulqa/truthful_qa", "generation", split="validation")
     dataset = dataset.shuffle(seed=42).select(range(min(args.num_samples, len(dataset))))
-    prompts = dataset['question']
+    all_prompts = dataset['question']
     
     os.makedirs(args.output_dir, exist_ok=True)
     backup_file = os.path.join(args.output_dir, "backup.jsonl")
     
     valid_results = []
+    completed_prompts = set()
     
-    for i, prompt in enumerate(prompts):
-        print(f"processing {i+1}/{len(prompts)}...")
-        res = await generate_vera_pair(client, prompt)
-        if res:
-            valid_results.append(res)
-            # saves directly to your hard drive so you cant lose it
-            with open(backup_file, "a", encoding="utf-8") as f:
-                f.write(json.dumps(res) + "\n")
+    # RESUME LOGIC: Check for existing backup and load it
+    if os.path.exists(backup_file):
+        print("Found existing backup. Loading previous progress...")
+        with open(backup_file, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    data = json.loads(line.strip())
+                    valid_results.append(data)
+                    completed_prompts.add(data["prompt"])
+        print(f"Resuming after {len(valid_results)} completed samples.")
         
-        if i < len(prompts) - 1:
-            await asyncio.sleep(15)
+    # Filter out prompts we have already completed
+    prompts_to_do = [p for p in all_prompts if p not in completed_prompts]
     
-    print(f"\ngenerated {len(valid_results)} pairs")
+    if not prompts_to_do:
+        print("All prompts are already completed!")
+    else:
+        for i, prompt in enumerate(prompts_to_do):
+            # Print total progress relative to the full batch
+            current_total = len(valid_results) + 1
+            print(f"processing remaining {i+1}/{len(prompts_to_do)} (Total Progress: {current_total}/{len(all_prompts)})...")
+            
+            res = await generate_vera_pair(client, prompt)
+            if res:
+                valid_results.append(res)
+                with open(backup_file, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(res) + "\n")
+            
+            if i < len(prompts_to_do) - 1:
+                await asyncio.sleep(15)
+    
+    print(f"\nFinal dataset size: {len(valid_results)} pairs")
     if not valid_results:
         return
 
+    # Save final parquet and push to Hugging Face
     df = pd.DataFrame(valid_results)
     local_path = os.path.join(args.output_dir, "vera_dataset.parquet")
     df.to_parquet(local_path, index=False)
