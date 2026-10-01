@@ -1,0 +1,22 @@
+# Model & Training Specs
+model_name: "Qwen/Qwen2.5-1.5B-Instruct"
+dataset_name: "your-username/vera-dpo-dataset"
+output_dir: "./checkpoints/vera_qwen_1.5b"
+
+# DPO Hyperparameters
+learning_rate: 5.0e-6
+dpo_beta: 0.1
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 4
+max_length: 1024
+max_prompt_length: 512
+epochs: 1
+warmup_ratio: 0.1
+lr_scheduler_type: "cosine"
+logging_steps: 10
+save_strategy: "epoch"
+
+# LoRA Configuration
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05

@@ -1,0 +1,15 @@
+# Data generation & APIs (runs locally/free)
+google-genai>=0.1.1
+datasets>=2.18.0
+pandas>=2.0.0
+pyarrow>=14.0.0
+python-dotenv>=1.0.0
+huggingface_hub>=0.20.0
+
+# Cloud training dependencies (used inside Kaggle)
+# unsloth
+# trl>=0.8.0
+# peft>=0.9.0
+# wandb>=0.16.0
+# accelerate>=0.28.0
+# bitsandbytes>=0.43.0
